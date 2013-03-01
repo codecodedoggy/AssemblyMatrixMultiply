@@ -93,8 +93,58 @@ matrix_print:                   ; void matrix_print ()
          ;
          ; *********************************************
          
-         mov r8, [rsp+8]
-         mov r9, [r8]
+         call output_newline    ; outputs a new line
+         
+         mov r8, [rbp+16]       ; r8 = address of matrix
+         mov r9, [r8]           ; r9 = ROWS
+         mov r10, [r8+8]        ; r10 = COLS
+         add r8, 16             ; sets r8 to the starting position of the
+                                ; matrix values, ie. jumps over width/height
+         
+         forRow:
+           mov r11, 0           ; r11 = row = 0
+         
+         nextRow:
+           cmp r11, r9          ; compare row and ROWS
+           jge endForRow        ; if row >= ROWS, jump
+           
+           ; otherwise:
+           
+           forCol:
+             mov r12, 0         ; r12 = col = 0
+             
+           nextCol:
+             cmp r12, r10       ; compare col and COLS
+             jge endForCol      ; if col >= COLS, jump
+             
+             ; otherwise:
+             
+             call output_tab    ; outputs a new tab
+             
+             ; Position of required element:
+             ;   start + 8 * (row * COLS + col)
+             mov r14, r11       ; r14 = r11 = row
+             imul r14, r10      ; r14 = row * COLS
+             add r14, r12       ; r14 = row * COLS + col
+             imul r14, 8        ; r14 = 8 * (row * COLS + col)
+             add r14, r8        ; r14 = start + 8 * (row * COLS + col)
+             
+             mov r13, [r14]     ; move correct matrix position into r13
+             
+             push r13
+             call output_int    ; outputs the integer at the position [row][col]
+             add rsp, 8
+             
+             inc r12            ; col++
+             jmp nextCol        ; next col iteration
+             
+           endForCol:
+             call output_newline ; outputs a new line
+             inc r11             ; row++
+             jmp nextRow         ; next row iteration
+           
+         endForRow:
+           ; end here         
 
          ; *********************************************
          ;
@@ -111,7 +161,34 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
 
          ;
          ; *********************************************
-         ;              YOUR CODE GOES HERE
+
+         mov r8, [rbp+16]       ; r8 = address of matrix A
+         mov r9, [rbp+24]       ; r9 = address of matrix B
+         mov r10, [rbp+32]      ; r10 = address of matrix C
+         
+         mov r11, [r10]         ; r11 = c.ROWS
+         mov r12, [r10+8]       ; r12 = c.COLS
+         
+         
+         forRow:
+           mov r13, 0           ; r13 = row = 0
+           
+           nextRow:
+             cmp r13, r11       ; compare row, ROWS
+             jge endForRow      ; if row >= ROWS, jump
+             
+             forCol:
+               mov r14, 0       ; r14 = col = 0
+               
+               nextCol:
+                 cmp r14, r12   ; compare col, COLS
+                 jge endForCol  ; if col >= COLS, jump
+                 
+                 ; I GOT DOWN TO HERE!
+             
+             inc r13            ; row++
+         
+
          ; *********************************************
          ;
 

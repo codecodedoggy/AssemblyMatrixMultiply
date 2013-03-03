@@ -99,7 +99,7 @@ matrix_print:                   ; void matrix_print ()
          mov r9, [r8]           ; r9 = ROWS
          mov r10, [r8+8]        ; r10 = COLS
          add r8, 16             ; sets r8 to the starting position of the
-                                ; matrix values, ie. jumps over width/height
+                                ; matrix values, ie. jumps over rows/cols
          
          forRow:
            mov r11, 0           ; r11 = row = 0
@@ -129,7 +129,7 @@ matrix_print:                   ; void matrix_print ()
              imul r14, 8        ; r14 = 8 * (row * COLS + col)
              add r14, r8        ; r14 = start + 8 * (row * COLS + col)
              
-             mov r13, [r14]     ; move correct matrix position into r13
+             mov r13, [r14]     ; move correct matrix element into r13
              
              push r13
              call output_int    ; outputs the integer at the position [row][col]
@@ -170,29 +170,29 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
          ; [r8+8] = c.COLS         
          
          forMultRows:
-           mov r13, 0                ; r13 = row = 0
+           mov r11, 0                ; r11 = row = 0
          
          nextMultRow:
-           cmp r13, [r8]             ; compare row and ROWS
-           jge endForMultRows        ; if row >= ROWS, jump
+           cmp r11, [r8]             ; compare row and C.ROWS
+           jge endForMultRows        ; if row >= C.ROWS, jump
            
            ; otherwise:
            
            forMultCols:
-             mov r14, 0              ; r14 = col = 0
+             mov r12, 0              ; r12 = col = 0
              
            nextMultCol:
-             cmp r14, [r8+8]         ; compare col and COLS
-             jge endForMultCols      ; if col >= COLS, jump
+             cmp r12, [r8+8]         ; compare col and C.COLS
+             jge endForMultCols      ; if col >= C.COLS, jump
                
              ; otherwise:
                               
              forAMultCols:
-               mov r15, 0            ; r15 = k = 0
-               mov qword[rbp-8], 0   ; sum = 0,  sum = [rbp-8]
+               mov r13, 0            ; r13 = k = 0
+               mov qword[rbp-8], 0   ; sum = [rbp-8] = 0
                  
              nextAMultCol:
-               cmp r15, [r9+8]       ; compare k and A.COLS
+               cmp r13, [r9+8]       ; compare k and A.COLS
                jge endForAMultCols   ; if k >= A.COLS, jump
                    
                ; otherwise:
@@ -201,32 +201,32 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
                ;   start of A + 16 + 8 * (row * A.COLS + k)
                ;   Note: we add 16 to 'skip' the row and col attributes.
                
-               mov r11, r13          ; r11 = row
-               imul r11, [r9+8]      ; r11 = row * A.COLS
-               add r11, r15          ; r11 = row * A.COLS + k
-               imul r11, 8           ; r11 = 8 * (row * A.COLS + k)
-               add r11, r9           ; r11 = start of A + 8 * (row * A.COLS + k)
-               add r11, 16           ; r11 = 16 + start + 8 * (row * A.COLS + k)
+               mov r14, r11          ; r14 = row
+               imul r14, [r9+8]      ; r14 = row * A.COLS
+               add r14, r13          ; r14 = row * A.COLS + k
+               imul r14, 8           ; r14 = 8 * (row * A.COLS + k)
+               add r14, r9           ; r14 = start of A + 8 * (row * A.COLS + k)
+               add r14, 16           ; r14 = 16 + start + 8 * (row * A.COLS + k)
                
-               mov r12, [r11]        ; r12 = A.elem[row,k]
+               mov r15, [r14]        ; r15 = A.elem[row,k]
                
                ; Position of required element:
                ;   start of B + 16 + 8 * (k * B.COLS + col)
                ;   Note: we add 16 to 'skip' the row and col attributes.
                
-               mov r11, r15          ; r11 = k
-               imul r11, [r10+8]     ; r11 = k * B.COLS
-               add r11, r14          ; r11 = k * B.COLS + col
-               imul r11, 8           ; r11 = 8 * (k * B.COLS + col)
-               add r11, r10          ; r11 = start of B + 8 * (k * B.COLS + col)
-               add r11, 16           ; r11 = 16 + start + 8 * (k * B.COLS + col)
+               mov r14, r13          ; r14 = k
+               imul r14, [r10+8]     ; r14 = k * B.COLS
+               add r14, r12          ; r14 = k * B.COLS + col
+               imul r14, 8           ; r14 = 8 * (k * B.COLS + col)
+               add r14, r10          ; r14 = start of B + 8 * (k * B.COLS + col)
+               add r14, 16           ; r14 = 16 + start + 8 * (k * B.COLS + col)
                
-               imul r12, [r11]       ; r12 = A.elem[row,k] * B.elem[k, col]
-               jo overflowError      ; Jumps to print an error
+               imul r15, [r14]       ; r15 = A.elem[row,k] * B.elem[k, col]
+               jo overflowError      ; Jumps to print an error upon overflow
                
-               add [rbp-8], r12      ; sum = sum + A.elem[row,k] * B.elem[k,col]
+               add [rbp-8], r15      ; sum = sum + A.elem[row,k] * B.elem[k,col]
                   
-               inc r15               ; k++
+               inc r13               ; k++
                jmp nextAMultCol      ; next k loop iteration
                    
              endForAMultCols:
@@ -235,22 +235,22 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
                ;   start of C + 16 + 8 * (row * COLS + col)
                ;   Note: we add 16 to 'skip' the row and col attributes.
                
-               mov r11, r13          ; r11 = row
-               imul r11, [r8+8]      ; r11 = row * COLS
-               add r11, r14          ; r11 = row * COLS + col
-               imul r11, 8           ; r11 = 8 * (row * COLS + col)
-               add r11, r8           ; r11 = start of C + 8 * (row * COLS + col)
-               add r11, 16           ; r11 = 16 + start + 8 * (row * COLS + col)
+               mov r14, r11          ; r14 = row
+               imul r14, [r8+8]      ; r14 = row * COLS
+               add r14, r12          ; r14 = row * COLS + col
+               imul r14, 8           ; r14 = 8 * (row * COLS + col)
+               add r14, r8           ; r14 = start of C + 8 * (row * COLS + col)
+               add r14, 16           ; r14 = 16 + start + 8 * (row * COLS + col)
                    
-               mov r12, [rbp-8]      ; move the sum into r12
-               mov qword[r11], r12   ; move r12 (sum) into the matrix position
+               mov r15, [rbp-8]      ; move the sum into r15
+               mov qword[r14], r15   ; move r15 (sum) into the matrix position
                
                
-             inc r14                 ; col++
+             inc r12                 ; col++
              jmp nextMultCol         ; next col iteration
                
            endForMultCols:
-             inc r13                 ; row++
+             inc r11                 ; row++
              jmp nextMultRow         ; next row iteration
            
          overflowError:
@@ -419,12 +419,12 @@ segment .data
         ; Declare test matrices
 matrixA DQ 2                    ; ROWS
         DQ 3                    ; COLS
-        DQ 4300000000, 2, 3              ; 1st row
+        DQ 1, 2, 3              ; 1st row
         DQ 4, 5, 6              ; 2nd row
 
 matrixB DQ 3                    ; ROWS
         DQ 2                    ; COLS
-        DQ 1, 4300000000                 ; 1st row
+        DQ 1, 2                 ; 1st row
         DQ 3, 4                 ; 2nd row
         DQ 5, 6                 ; 3rd row
 

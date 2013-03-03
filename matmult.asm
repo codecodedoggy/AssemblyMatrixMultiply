@@ -162,32 +162,130 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
          ;
          ; *********************************************
 
-         mov r8, [rbp+16]       ; r8 = address of matrix A
-         mov r9, [rbp+24]       ; r9 = address of matrix B
-         mov r10, [rbp+32]      ; r10 = address of matrix C
+         mov r8, [rbp+16]            ; r8 = address of matrix C
+         mov r9, [rbp+24]            ; r9 = address of matrix A
+         mov r10, [rbp+32]           ; r10 = address of matrix B
          
-         mov r11, [r10]         ; r11 = c.ROWS
-         mov r12, [r10+8]       ; r12 = c.COLS
+         ; [r8] = c.ROWS
+         ; [r8+8] = c.COLS         
          
+         forMultRows:
+           mov r13, 0                ; r13 = row = 0
          
-         forRow:
-           mov r13, 0           ; r13 = row = 0
+         nextMultRow:
+           cmp r13, [r8]             ; compare row and ROWS
+           jge endForMultRows        ; if row >= ROWS, jump
            
-           nextRow:
-             cmp r13, r11       ; compare row, ROWS
-             jge endForRow      ; if row >= ROWS, jump
+           ; otherwise:
+           
+           forMultCols:
+             mov r14, 0              ; r14 = col = 0
              
-             forCol:
-               mov r14, 0       ; r14 = col = 0
+           nextMultCol:
+             cmp r14, [r8+8]         ; compare col and COLS
+             jge endForMultCols      ; if col >= COLS, jump
                
-               nextCol:
-                 cmp r14, r12   ; compare col, COLS
-                 jge endForCol  ; if col >= COLS, jump
+             ; otherwise:
+                              
+             forAMultCols:
+               mov r15, 0            ; r15 = k = 0
+               mov qword[rbp-8], 0   ; sum = 0,  sum = [rbp-8]
                  
-                 ; I GOT DOWN TO HERE!
-             
-             inc r13            ; row++
-         
+             nextAMultCol:
+               cmp r15, [r9+8]       ; compare k and A.COLS
+               jge endForAMultCols   ; if k >= A.COLS, jump
+                   
+               ; otherwise:
+               
+               ; Position of required element:
+               ;   start of A + 16 + 8 * (row * A.COLS + k)
+               ;   Note: we add 16 to 'skip' the row and col attributes.
+               
+               mov r11, r13          ; r11 = row
+               imul r11, [r9+8]      ; r11 = row * A.COLS
+               add r11, r15          ; r11 = row * A.COLS + k
+               imul r11, 8           ; r11 = 8 * (row * A.COLS + k)
+               add r11, r9           ; r11 = start of A + 8 * (row * A.COLS + k)
+               add r11, 16           ; r11 = 16 + start + 8 * (row * A.COLS + k)
+               
+               mov r12, [r11]        ; r12 = A.elem[row,k]
+               
+               ; Position of required element:
+               ;   start of B + 16 + 8 * (k * B.COLS + col)
+               ;   Note: we add 16 to 'skip' the row and col attributes.
+               
+               mov r11, r15          ; r11 = k
+               imul r11, [r10+8]     ; r11 = k * B.COLS
+               add r11, r14          ; r11 = k * B.COLS + col
+               imul r11, 8           ; r11 = 8 * (k * B.COLS + col)
+               add r11, r10          ; r11 = start of B + 8 * (k * B.COLS + col)
+               add r11, 16           ; r11 = 16 + start + 8 * (k * B.COLS + col)
+               
+               imul r12, [r11]       ; r12 = A.elem[row,k] * B.elem[k, col]
+               jo overflowError      ; Jumps to print an error
+               
+               add [rbp-8], r12      ; sum = sum + A.elem[row,k] * B.elem[k,col]
+                  
+               inc r15               ; k++
+               jmp nextAMultCol      ; next k loop iteration
+                   
+             endForAMultCols:
+                   
+               ; Position of required element:
+               ;   start of C + 16 + 8 * (row * COLS + col)
+               ;   Note: we add 16 to 'skip' the row and col attributes.
+               
+               mov r11, r13          ; r11 = row
+               imul r11, [r8+8]      ; r11 = row * COLS
+               add r11, r14          ; r11 = row * COLS + col
+               imul r11, 8           ; r11 = 8 * (row * COLS + col)
+               add r11, r8           ; r11 = start of C + 8 * (row * COLS + col)
+               add r11, 16           ; r11 = 16 + start + 8 * (row * COLS + col)
+                   
+               mov r12, [rbp-8]      ; move the sum into r12
+               mov qword[r11], r12   ; move r12 (sum) into the matrix position
+               
+               
+             inc r14                 ; col++
+             jmp nextMultCol         ; next col iteration
+               
+           endForMultCols:
+             inc r13                 ; row++
+             jmp nextMultRow         ; next row iteration
+           
+         overflowError:
+           ; An overflow has occurred
+           push 'O'
+           call output_char
+           add rsp, 8
+           push 'v'
+           call output_char
+           add rsp, 8
+           push 'e'
+           call output_char
+           add rsp, 8
+           push 'r'
+           call output_char
+           add rsp, 8
+           push 'f'
+           call output_char
+           add rsp, 8
+           push 'l'
+           call output_char
+           add rsp, 8
+           push 'o'
+           call output_char
+           add rsp, 8
+           push 'w'
+           call output_char
+           add rsp, 8
+           push '!'
+           call output_char
+           add rsp, 8
+           
+         endForMultRows:
+           ; We're done!
+           
 
          ; *********************************************
          ;
@@ -321,12 +419,12 @@ segment .data
         ; Declare test matrices
 matrixA DQ 2                    ; ROWS
         DQ 3                    ; COLS
-        DQ 1, 2, 3              ; 1st row
+        DQ 4300000000, 2, 3              ; 1st row
         DQ 4, 5, 6              ; 2nd row
 
 matrixB DQ 3                    ; ROWS
         DQ 2                    ; COLS
-        DQ 1, 2                 ; 1st row
+        DQ 1, 4300000000                 ; 1st row
         DQ 3, 4                 ; 2nd row
         DQ 5, 6                 ; 3rd row
 

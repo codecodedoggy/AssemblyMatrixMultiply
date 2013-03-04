@@ -93,6 +93,14 @@ matrix_print:                   ; void matrix_print ()
          ;
          ; *********************************************
          
+         push r8
+         push r9
+         push r10
+         push r11
+         push r12
+         push r13
+         push r14
+         
          call output_newline    ; outputs a new line
          
          mov r8, [rbp+16]       ; r8 = address of matrix
@@ -144,7 +152,15 @@ matrix_print:                   ; void matrix_print ()
              jmp nextRow         ; next row iteration
            
          endForRow:
-           ; end here         
+           ; end here
+           
+         pop r14
+         pop r13
+         pop r12
+         pop r11
+         pop r10
+         pop r9
+         pop r8
 
          ; *********************************************
          ;
@@ -161,6 +177,15 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
 
          ;
          ; *********************************************
+         
+         push r8
+         push r9
+         push r10
+         push r11
+         push r12
+         push r13
+         push r14
+         push r15
 
          mov r8, [rbp+16]            ; r8 = address of matrix C
          mov r9, [rbp+24]            ; r9 = address of matrix A
@@ -286,7 +311,15 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
          endForMultRows:
            ; We're done!
            
-
+         pop r15
+         pop r14
+         pop r13
+         pop r12
+         pop r11
+         pop r10
+         pop r9
+         pop r8
+         
          ; *********************************************
          ;
 

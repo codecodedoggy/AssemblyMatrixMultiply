@@ -93,13 +93,13 @@ matrix_print:                   ; void matrix_print ()
          ;
          ; *********************************************
          
-         push r8
-         push r9
-         push r10
-         push r11
-         push r12
-         push r13
-         push r14
+         push r8                ; push current value of r8
+         push r9                ; push current value of r9
+         push r10               ; push current value of r10
+         push r11               ; push current value of r11
+         push r12               ; push current value of r12
+         push r13               ; push current value of r13
+         push r14               ; push current value of r14
          
          call output_newline    ; outputs a new line
          
@@ -154,13 +154,13 @@ matrix_print:                   ; void matrix_print ()
          endForRow:
            ; end here
            
-         pop r14
-         pop r13
-         pop r12
-         pop r11
-         pop r10
-         pop r9
-         pop r8
+         pop r14                ; restore original value of r14
+         pop r13                ; restore original value of r13
+         pop r12                ; restore original value of r12
+         pop r11                ; restore original value of r11
+         pop r10                ; restore original value of r10
+         pop r9                 ; restore original value of r9
+         pop r8                 ; restore original value of r8
 
          ; *********************************************
          ;
@@ -178,14 +178,14 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
          ;
          ; *********************************************
          
-         push r8
-         push r9
-         push r10
-         push r11
-         push r12
-         push r13
-         push r14
-         push r15
+         push r8                     ; push current value of r8
+         push r9                     ; push current value of r9
+         push r10                    ; push current value of r10
+         push r11                    ; push current value of r11
+         push r12                    ; push current value of r12
+         push r13                    ; push current value of r13
+         push r14                    ; push current value of r14
+         push r15                    ; push current value of r15
 
          mov r8, [rbp+16]            ; r8 = address of matrix C
          mov r9, [rbp+24]            ; r9 = address of matrix A
@@ -279,7 +279,7 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
              jmp nextMultRow         ; next row iteration
            
          overflowError:
-           ; An overflow has occurred
+           ; An overflow has occurred, let's print a helpful message!
            push 'O'
            call output_char
            add rsp, 8
@@ -311,14 +311,14 @@ matrix_mult:                    ; void matix_mult (matrix A, matrix B)
          endForMultRows:
            ; We're done!
            
-         pop r15
-         pop r14
-         pop r13
-         pop r12
-         pop r11
-         pop r10
-         pop r9
-         pop r8
+         pop r15                     ; restore original value of r15
+         pop r14                     ; restore original value of r14
+         pop r13                     ; restore original value of r13
+         pop r12                     ; restore original value of r12
+         pop r11                     ; restore original value of r11
+         pop r10                     ; restore original value of r10
+         pop r9                      ; restore original value of r9
+         pop r8                      ; restore original value of r8
          
          ; *********************************************
          ;
